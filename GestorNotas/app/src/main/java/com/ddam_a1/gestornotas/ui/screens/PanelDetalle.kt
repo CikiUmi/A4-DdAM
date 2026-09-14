@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.ddam_a1.gestornotas.modelClasses.Nota
 import com.ddam_a1.gestornotas.ui.components.ELEVACION_TARJETA
 import com.ddam_a1.gestornotas.ui.components.EstadoCard
-import com.ddam_a1.gestornotas.ui.components.IndicadorPrioridad
 import com.ddam_a1.gestornotas.ui.components.PADDING_TARJETA
 import com.ddam_a1.gestornotas.ui.components.RADIO_TARJETA
 import com.ddam_a1.gestornotas.ui.components.SEPARACION_TITULO_DESCRIPCION
@@ -93,14 +92,11 @@ fun PanelDetalle(
                 textAlign = TextAlign.End
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IndicadorPrioridad(nota.prioridad)
-                Text(
-                    text = nota.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colorTexto
-                )
-            }
+            Text(
+                text = nota.titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = colorTexto
+            )
 
             Spacer(Modifier.height(SEPARACION_TITULO_DESCRIPCION))
 
@@ -109,7 +105,7 @@ fun PanelDetalle(
             // el panel entero (lo envuelve Main), no este texto: asi los botones
             // se van con el contenido en vez de quedarse flotando.
             Text(
-                text = nota.descripcion,
+                text = nota.contenido,
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorSecundario
             )

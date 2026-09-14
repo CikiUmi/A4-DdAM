@@ -23,7 +23,7 @@ import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
  *
  * Tiene DOS layouts, no uno estirado:
  *
- *   compact / medium  ->  solo la lista. Tocar una tarjeta la despliega ahi mismo.
+ *   compact / medium  ->  solo la lista. Tocar una tarjeta ABRE su vista.
  *   expanded          ->  lista + panel de detalle. Tocar una tarjeta la SELECCIONA
  *                         y el detalle aparece al lado.
  *
@@ -40,8 +40,11 @@ fun Main(
     margenes: Margenes,
     onMoverAPapelera: (String) -> Unit,
     onEditar: (String) -> Unit,
+    // Tocar una tarjeta en telefono / tablet chica: abre la vista de la nota.
+    onAbrir: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     seleccionadoId: String? = null,
+    // Tocar una tarjeta en tablet grande: la selecciona para el panel.
     onSeleccionar: (String) -> Unit = {}
 ) {
     val vistaDoble = margenes.tamano == TamanoVentana.EXPANDED
@@ -54,7 +57,8 @@ fun Main(
             accion = AccionSwipe.BORRAR,
             estadoCard = EstadoCard.NORMAL,
             onAccion = onMoverAPapelera,
-            onEditar = onEditar,
+            // El MISMO hueco, otro significado: aqui tocar navega.
+            onSeleccionar = onAbrir,
             mensajeVacio = "No tienes notas.\nToca + para crear la primera.",
             modifier = modifier
         )

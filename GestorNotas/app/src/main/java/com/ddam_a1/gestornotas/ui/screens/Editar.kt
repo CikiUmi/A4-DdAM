@@ -1,8 +1,5 @@
 package com.ddam_a1.gestornotas.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,18 +29,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ddam_a1.gestornotas.R
 import com.ddam_a1.gestornotas.modelClasses.Nota
-import com.ddam_a1.gestornotas.modelClasses.nivelPrioridad
 import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -107,14 +97,13 @@ fun Editar(
     // rememberSaveable y no remember: si el usuario gira el telefono a la mitad
     // de escribir, no puede perder lo que llevaba.
     var titulo by rememberSaveable { mutableStateOf(original?.titulo ?: "") }
-    var descripcion by rememberSaveable { mutableStateOf(original?.descripcion ?: "") }
+    var descripcion by rememberSaveable { mutableStateOf(original?.contenido ?: "") }
     var fechaTexto by rememberSaveable {
         mutableStateOf((original?.fechaNota?.toLocalDate() ?: LocalDate.now()).format(F_FECHA))
     }
     var horaTexto by rememberSaveable {
         mutableStateOf((original?.fechaNota?.toLocalTime() ?: LocalTime.of(9, 0)).format(F_HORA))
     }
-    var prioridad by rememberSaveable { mutableStateOf(original?.prioridad ?: nivelPrioridad.NULA) }
 
     // ---- "YA LO TOCO" ----
     // Sin esto, el formulario se abriria con "El titulo es obligatorio" en rojo
@@ -300,24 +289,7 @@ fun Editar(
 
             Spacer(Modifier.height(SEPARACION_CAMPOS))
 
-            // ---- PRIORIDAD ----
-            Text(
-                text = "Prioridad",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                nivelPrioridad.entries.forEach { nivel ->
-                    ChipPrioridad(
-                        nivel = nivel,
-                        seleccionado = nivel == prioridad,
-                        onClick = { prioridad = nivel }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
 
             // ---- BOTONES ----
             Row(
@@ -342,9 +314,8 @@ fun Editar(
                         onGuardar(
                             base.copy(
                                 titulo = titulo.trim(),
-                                descripcion = descripcion.trim(),
-                                fechaNota = cuando,
-                                prioridad = prioridad
+                                contenido = descripcion.trim(),
+                                fechaNota = cuando
                             )
                         )
                     },
@@ -379,69 +350,6 @@ private fun parsearFechaHora(fecha: String, hora: String): LocalDateTime? = try 
     null
 }
 
-/**
- * Boton de prioridad.
- *
- * Dos senales, nunca solo el color: el chip seleccionado cambia de FONDO ademas
- * del color del icono. Si la unica diferencia fuera el color, alguien con
- * daltonismo no distinguiria "media" de "alta".
- */
-@Composable
-private fun ChipPrioridad(
-    nivel: nivelPrioridad,
-    seleccionado: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colorNivel = when (nivel) {
-        nivelPrioridad.ALTA -> MaterialTheme.colorScheme.error
-        nivelPrioridad.MEDIA -> MaterialTheme.colorScheme.primary
-        nivelPrioridad.BAJA -> MaterialTheme.colorScheme.tertiary
-        nivelPrioridad.NULA -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val etiqueta = when (nivel) {
-        nivelPrioridad.ALTA -> "Alta"
-        nivelPrioridad.MEDIA -> "Media"
-        nivelPrioridad.BAJA -> "Baja"
-        nivelPrioridad.NULA -> "Sin prioridad"
-    }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-            .heightIn(min = 48.dp)             // minimo tactil de Material
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                if (seleccionado) MaterialTheme.colorScheme.secondaryContainer
-                else Color.Transparent
-            )
-            .border(
-                width = 1.dp,
-                color = if (seleccionado) MaterialTheme.colorScheme.onSecondaryContainer
-                else MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(14.dp)
-            )
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 14.dp)
-    ) {
-        if (nivel != nivelPrioridad.NULA) {
-            Icon(
-                painter = painterResource(R.drawable.ic_prioridad),
-                contentDescription = null,       // lo dice el texto de al lado
-                tint = colorNivel,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        Text(
-            text = etiqueta,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (seleccionado) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
 // ============================================================
 //  Previews
 // ============================================================
@@ -463,9 +371,8 @@ private fun EditarExistentePreview() {
         Editar(
             original = Nota(
                 titulo = "Entregar la practica de DdAM",
-                descripcion = "Subir el APK y la documentacion al aula virtual.",
-                fechaNota = LocalDateTime.now().plusDays(1),
-                prioridad = nivelPrioridad.ALTA
+                contenido = "Subir el APK y la documentacion al aula virtual.",
+                fechaNota = LocalDateTime.now().plusDays(1)
             ),
             margenes = margenesPara(412.dp),
             onGuardar = {},

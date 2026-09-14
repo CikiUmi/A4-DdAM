@@ -33,7 +33,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ddam_a1.gestornotas.modelClasses.Nota
-import com.ddam_a1.gestornotas.modelClasses.nivelPrioridad
 import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
 import java.time.LocalDateTime
 
@@ -61,7 +60,6 @@ fun NotaDeslizable(
     onAccion: (String) -> Unit,
     modifier: Modifier = Modifier,
     estado: EstadoCard = EstadoCard.NORMAL,
-    onEditar: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
     // El estado del gesto: cuánto se ha corrido, hacia dónde, si ya pasó el umbral.
@@ -95,7 +93,6 @@ fun NotaDeslizable(
         CardNota(
             nota = nota,
             estado = estado,
-            onEditar = onEditar,
             onClick = onClick
         )
     }
@@ -163,19 +160,18 @@ fun AnimacionEntrada(
 
 private const val FONDO = 0xFFEAE2D4
 
-private fun demo(titulo: String, prioridad: nivelPrioridad = nivelPrioridad.NULA) = Nota(
+private fun demo(titulo: String) = Nota(
     titulo = titulo,
-    descripcion = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+    contenido = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
             "Pellentesque a nisi ultricies, faucibus risus feugiat.",
-    fechaNota = LocalDateTime.now().plusDays(2),
-    prioridad = prioridad
+    fechaNota = LocalDateTime.now().plusDays(2)
 )
 
 private fun datosDemo() = listOf(
-    demo("Entregar la practica de DdAM", nivelPrioridad.ALTA),
+    demo("Entregar la practica de DdAM"),
     demo("Comprar cafe"),
-    demo("Llamar a mama", nivelPrioridad.BAJA),
-    demo("Revisar el Figma del equipo", nivelPrioridad.MEDIA)
+    demo("Llamar a mama"),
+    demo("Revisar el Figma del equipo")
 )
 
 /**

@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ddam_a1.gestornotas.modelClasses.Nota
-import com.ddam_a1.gestornotas.modelClasses.nivelPrioridad
 import com.ddam_a1.gestornotas.ui.components.AccionSwipe
 import com.ddam_a1.gestornotas.ui.components.AnimacionEntrada
 import com.ddam_a1.gestornotas.ui.components.EstadoCard
@@ -49,9 +48,11 @@ fun ListaDeNotas(
     onAccion: (String) -> Unit,
     mensajeVacio: String,
     modifier: Modifier = Modifier,
-    onEditar: ((String) -> Unit)? = null,
-    // --- solo se usan en la vista doble de tablet ---
+    // Cual tarjeta se pinta como abierta. Solo lo usa la vista doble de tablet.
     seleccionadoId: String? = null,
+    // Que pasa al tocar una tarjeta. La lista NO decide que significa:
+    // en telefono la pantalla navega a la vista de la nota, en tablet la
+    // selecciona para el panel de al lado.
     onSeleccionar: ((String) -> Unit)? = null,
     // En la vista doble el titulo lo dibuja la pantalla, arriba de LOS DOS
     // paneles, asi que la lista no debe dibujarlo otra vez.
@@ -122,13 +123,7 @@ fun ListaDeNotas(
                         accion = accion,
                         estado = if (estaSeleccionada) EstadoCard.SELECCIONADO else estadoCard,
                         onAccion = onAccion,
-                        // Si la pantalla no da onEditar (la papelera no lo da),
-                        // la tarjeta no muestra el boton. Un boton que no lleva
-                        // a ningun lado es peor que no tener boton.
-                        onEditar = onEditar?.let { editar -> { editar(nota.id) } },
-                        // Si hay panel de detalle, tocar SELECCIONA en vez de
-                        // desplegar. Si no lo hay (telefono), va null y la
-                        // tarjeta se sigue plegando ella sola como siempre.
+                        // Si nadie da onSeleccionar, la tarjeta no es tocable.
                         onClick = onSeleccionar?.let { sel -> { sel(nota.id) } }
                     )
                 }
@@ -173,20 +168,18 @@ private const val FONDO = 0xFFEAE2D4
 internal fun notasDeEjemplo() = listOf(
     Nota(
         titulo = "Entregar la practica de DdAM",
-        descripcion = "Subir el APK y la documentacion al aula virtual antes de las 11:59.",
-        fechaNota = LocalDateTime.now().plusDays(1),
-        prioridad = nivelPrioridad.ALTA
+        contenido = "Subir el APK y la documentacion al aula virtual antes de las 11:59.",
+        fechaNota = LocalDateTime.now().plusDays(1)
     ),
     Nota(
         titulo = "Comprar cafe",
-        descripcion = "Del que muele la tienda de la esquina.",
+        contenido = "Del que muele la tienda de la esquina.",
         fechaNota = LocalDateTime.now().plusDays(3)
     ),
     Nota(
         titulo = "Revisar el Figma del equipo",
-        descripcion = "Ver los comentarios que dejaron en la pantalla de editar.",
-        fechaNota = LocalDateTime.now().plusDays(5),
-        prioridad = nivelPrioridad.MEDIA
+        contenido = "Ver los comentarios que dejaron en la pantalla de editar.",
+        fechaNota = LocalDateTime.now().plusDays(5)
     )
 )
 
@@ -201,7 +194,6 @@ private fun ListaCompactPreview() {
             accion = AccionSwipe.BORRAR,
             estadoCard = EstadoCard.NORMAL,
             onAccion = {},
-            onEditar = {},
             mensajeVacio = ""
         )
     }
@@ -218,7 +210,6 @@ private fun ListaMediumPreview() {
             accion = AccionSwipe.BORRAR,
             estadoCard = EstadoCard.NORMAL,
             onAccion = {},
-            onEditar = {},
             mensajeVacio = ""
         )
     }

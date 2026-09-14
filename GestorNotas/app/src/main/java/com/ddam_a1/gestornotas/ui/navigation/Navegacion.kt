@@ -18,6 +18,7 @@ import com.ddam_a1.gestornotas.ui.screens.Andamio
 import com.ddam_a1.gestornotas.ui.screens.Editar
 import com.ddam_a1.gestornotas.ui.screens.Main
 import com.ddam_a1.gestornotas.ui.screens.Papelera
+import com.ddam_a1.gestornotas.ui.screens.Vista
 import com.ddam_a1.gestornotas.viewmodel.NotasViewModel
 
 // ============================================================
@@ -45,6 +46,18 @@ private const val RUTA_EDITAR = "editar?$ARG_ID={$ARG_ID}"
 
 private fun rutaEditar(id: String) = "editar?$ARG_ID=$id"
 private const val RUTA_CREAR = "editar"
+
+/**
+ * La vista de una nota. Misma forma que editar, mismo argumento opcional:
+ *
+ *     vista            -> nota nueva   (id = null)
+ *     vista?id=abc-123 -> esa nota
+ *
+ * Todavia esta vacia; existe para que tocar una tarjeta ya lleve a algun lado.
+ */
+private const val RUTA_VISTA = "vista?$ARG_ID={$ARG_ID}"
+
+private fun rutaVista(id: String) = "vista?$ARG_ID=$id"
 
 @Composable
 fun NotasNavHost(modifier: Modifier = Modifier) {
@@ -107,6 +120,8 @@ fun NotasNavHost(modifier: Modifier = Modifier) {
                     margenes = margenes,
                     onMoverAPapelera = { id -> vm.meterPapelera(id) },
                     onEditar = { id -> navController.navigate(rutaEditar(id)) },
+                    // En telefono y tablet chica, tocar una tarjeta abre su vista.
+                    onAbrir = { id -> navController.navigate(rutaVista(id)) },
                     seleccionadoId = seleccionadoId,
                     onSeleccionar = { id -> seleccionadoId = id }
                 )
@@ -131,6 +146,36 @@ fun NotasNavHost(modifier: Modifier = Modifier) {
                     notas = vm.ListaPapelera,
                     margenes = margenes,
                     onRecuperar = { id -> vm.sacarPapelera(id) }
+                )
+            }
+        }
+
+        // ---------- VISTA DE UNA NOTA ----------
+        composable(
+            route = RUTA_VISTA,
+            arguments = listOf(
+                navArgument(ARG_ID) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { entrada ->
+            // Igual que editar: leer por id, y si no existe es una nota nueva.
+            val id = entrada.arguments?.getString(ARG_ID)
+            val nota = vm.leer(id)
+
+            Andamio(
+                destinoActual = null,
+                onDestino = { destino -> irA(destino) },
+                onNuevo = { navController.navigate(RUTA_CREAR) { launchSingleTop = true } },
+                railAbierto = railAbierto,
+                onAlternarRail = alternarRail
+            ) { margenes ->
+                Vista(
+                    nota = nota,
+                    margenes = margenes,
+                    onCerrar = { navController.popBackStack() }
                 )
             }
         }

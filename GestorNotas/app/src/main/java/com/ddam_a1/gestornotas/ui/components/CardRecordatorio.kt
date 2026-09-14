@@ -1,14 +1,10 @@
 package com.ddam_a1.gestornotas.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,19 +15,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -41,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import com.ddam_a1.gestornotas.R
 import com.ddam_a1.gestornotas.modelClasses.DIAS_EN_PAPELERA
 import com.ddam_a1.gestornotas.modelClasses.Nota
-import com.ddam_a1.gestornotas.modelClasses.nivelPrioridad
 import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -82,48 +70,26 @@ internal val ELEVACION_TARJETA = 3.dp
 enum class EstadoCard { NORMAL, SELECCIONADO, EN_PAPELERA }
 
 /**
- * Tarjeta de una nota. Se pliega y despliega al tocarla.
+ * Tarjeta de una nota.
  *
- * DECISIONES IMPORTANTES
+ * Ya NO se despliega. Tocarla avisa hacia afuera con `onClick` y la pantalla
+ * decide que significa: en telefono abrir la vista de la nota, en tablet
+ * seleccionarla para el panel de al lado.
  *
- * 1. El estado "expandida" vive AQUÍ ADENTRO (`remember`). Cada tarjeta se acuerda
- *    sola de si está abierta, y la pantalla no tiene que llevar la cuenta.
- *
- * 2. El `estado` (normal / seleccionado / papelera) SÍ entra por parámetro, porque
- *    eso no lo decide la tarjeta: lo decide la pantalla según dónde esté.
- *
- * 3. `Modifier.animateContentSize()` anima el plegado solo, sin programar nada.
+ * Por eso tampoco dibuja la flecha: el control de desplegar no tendria nada que
+ * controlar, y un boton que no hace nada confunde mas que ayudar.
  *
  * @param nota los datos que se van a mostrar
- * @param estado cuál de las variantes de se dibuja (papelera, desplegado, seleccionado, etc)
- * @param onEditar si le pasas algo, aparece un botón "Editar" al desplegarse
- * @param onClick si le pasas algo, tocar la tarjeta hace ESO en vez de plegarla.
- *        Sirve para la vista doble de tablet: ahí tocar una tarjeta la SELECCIONA
- *        y el detalle se ve en el panel de al lado, así que la tarjeta ya no
- *        necesita desplegarse ni mostrar su flecha. Una tarjeta que delega su
- *        click no administra su propio desplegado, y por eso tampoco dibuja el
- *        control de desplegarse: un botón que no hace nada confunde más que
- *        ayudar.
+ * @param estado cual variante se dibuja (normal, seleccionada, en papelera)
+ * @param onClick que hacer al tocarla. Si va null, la tarjeta no es tocable.
  */
 @Composable
 fun CardNota(
     nota: Nota,
     modifier: Modifier = Modifier,
     estado: EstadoCard = EstadoCard.NORMAL,
-    onEditar: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
-    // Si alguien más se encarga del click, esta tarjeta nunca se despliega sola.
-    val sePliega = onClick == null
-
-    var expandida by remember { mutableStateOf(false) }
-
-    // La flecha gira 180° al desplegarse. `animateFloatAsState` hace la transiciónn con esto:
-    val rotacionFlecha by animateFloatAsState(
-        targetValue = if (expandida) 180f else 0f,
-        label = "rotacionFlecha"
-    )
-
     val colorTexto = colorTextoDe(estado)
     val colorSecundario = colorSecundarioDe(estado)
 
@@ -133,15 +99,19 @@ fun CardNota(
         elevation = CardDefaults.cardElevation(defaultElevation = ELEVACION_TARJETA),
         modifier = modifier
             .fillMaxWidth()
-            .clickable { if (sePliega) expandida = !expandida else onClick!!() }
-            .animateContentSize()
+            // `then` con un Modifier vacio: si nadie da onClick, no se agrega
+            // nada. Asi la tarjeta no finge ser tocable cuando no lo es.
+            .then(
+                if (onClick != null) Modifier.clickable(onClick = onClick)
+                else Modifier
+            )
     ) {
         Column(modifier = Modifier.padding(PADDING_TARJETA)) {
 
-            // ---- La línea de fecha, arriba a la derecha ----
+            // ---- La linea de fecha, arriba a la derecha ----
             // En la bandeja dice "hace 2 h" en gris.
             // En la papelera dice "se elimina el 12/09/2026" en ROJO.
-            // Es el mismo hueco contando dos cosas distintas según dónde estés.
+            // Es el mismo hueco contando dos cosas distintas segun donde estes.
             Text(
                 text = if (estado == EstadoCard.EN_PAPELERA)
                     textoEliminacion(nota.fechaEliminado)
@@ -155,66 +125,27 @@ fun CardNota(
                 textAlign = TextAlign.End
             )
 
-            // Sin separador aquí: la fecha y el título van pegados,
-            // porque son un mismo bloque de información.
+            // Sin separador aqui: la fecha y el titulo van pegados,
+            // porque son un mismo bloque de informacion.
 
-            // ---- Prioridad + título ----
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IndicadorPrioridad(nota.prioridad)
-                Text(
-                    text = nota.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colorTexto
-                )
-            }
+            Text(
+                text = nota.titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = colorTexto
+            )
 
             Spacer(Modifier.height(SEPARACION_TITULO_DESCRIPCION))
 
-            // ---- Descripción ----
-            // Plegada: 2 líneas con "...". Desplegada: completa.
-            // `maxLines` + `Ellipsis` es lo que evita que el texto se salga.
+            // ---- Adelanto del contenido ----
+            // Siempre dos lineas con "...". El texto completo se ve al abrir la
+            // nota, no aqui: la tarjeta es un indice, no el documento.
             Text(
-                text = nota.descripcion,
+                text = nota.contenido,
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorSecundario,
-                maxLines = if (expandida) Int.MAX_VALUE else 2,
-                overflow = if (expandida) TextOverflow.Clip else TextOverflow.Ellipsis
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-
-            if (expandida) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "Creada el ${formatoLargo(nota.fechaNota)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colorTexto
-                )
-            }
-
-            // ---- Fila de abajo: botón editar (opcional) + flecha ----
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (expandida && onEditar != null) {
-                    TextButton(onClick = onEditar) { Text("Editar", color = colorTexto) }
-                }
-
-                if (sePliega) {
-                    IconButton(onClick = { expandida = !expandida }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_expand),
-                            // Describe lo que VA A PASAR, y cambia con el estado.
-                            contentDescription = if (expandida) "Contraer nota"
-                            else "Expandir nota",
-                            tint = colorTexto,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .rotate(rotacionFlecha)
-                        )
-                    }
-                }
-            }
         }
     }
 }
@@ -308,53 +239,6 @@ fun FondoSwipe(
 }
 
 // ============================================================
-//  Indicador de prioridad
-// ============================================================
-
-/**
- * El puntito de prioridad que va antes del título.
- *
- * 1. En NULA no dibuja NADA, ni siquiera un hueco: una nota sin prioridad
- *    no debe pagar espacio por una propiedad que no tiene.
- *
- * 2. El `contentDescription` dice "Prioridad alta" en palabras, y es OBLIGATORIO:
- *    si la única señal fuera el color, alguien con daltonismo o usando TalkBack
- *    no se enteraría.
- */
-
-@Composable
-fun IndicadorPrioridad(
-    prioridad: nivelPrioridad,
-    modifier: Modifier = Modifier
-) {
-    if (prioridad == nivelPrioridad.NULA) return
-
-    Icon(
-        painter = painterResource(R.drawable.ic_prioridad),
-        contentDescription = descripcionPrioridad(prioridad),
-        tint = colorPrioridad(prioridad),
-        modifier = modifier
-            .padding(end = 6.dp)
-            .size(18.dp)
-    )
-}
-
-@Composable
-private fun colorPrioridad(prioridad: nivelPrioridad): Color = when (prioridad) {
-    nivelPrioridad.ALTA -> MaterialTheme.colorScheme.error                 // rojo
-    nivelPrioridad.MEDIA -> MaterialTheme.colorScheme.primaryContainer     // amarillito
-    nivelPrioridad.BAJA -> MaterialTheme.colorScheme.tertiary              // verde
-    nivelPrioridad.NULA -> Color.Transparent
-}
-
-private fun descripcionPrioridad(prioridad: nivelPrioridad): String = when (prioridad) {
-    nivelPrioridad.ALTA -> "Prioridad alta"
-    nivelPrioridad.MEDIA -> "Prioridad media"
-    nivelPrioridad.BAJA -> "Prioridad baja"
-    nivelPrioridad.NULA -> "Sin prioridad"
-}
-
-// ============================================================
 //  Ayudantes de fecha
 //  `private` porque solo los usa esta tarjeta. Si otra pantalla los necesita,
 //  se pueden mover a un archivo en ui y quítarles el private.
@@ -400,14 +284,13 @@ internal fun textoEliminacion(fechaEliminado: LocalDateTime?): String =
 
 private const val FONDO_APP = 0xFFEAE2D4
 
-private fun ejemplo(prioridad: nivelPrioridad = nivelPrioridad.NULA) = Nota(
+private fun ejemplo() = Nota(
     titulo = "Tema del Nota",
-    descripcion = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+    contenido = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
             "Pellentesque a nisi ultricies, faucibus risus feugiat, maximus augue. " +
             "Etiam felis libero, viverra sed enim quis.",
     fechaNota = LocalDateTime.now().plusDays(2),
-    fechaEliminado = LocalDateTime.now(),
-    prioridad = prioridad
+    fechaEliminado = LocalDateTime.now()
 )
 
 @Preview(name = "1 · Normal", showBackground = true, backgroundColor = FONDO_APP)
@@ -415,14 +298,6 @@ private fun ejemplo(prioridad: nivelPrioridad = nivelPrioridad.NULA) = Nota(
 private fun CardNormalPreview() {
     GestorNotasTheme {
         CardNota(ejemplo(), Modifier.padding(16.dp))
-    }
-}
-
-@Preview(name = "2 · Prioridad alta", showBackground = true, backgroundColor = FONDO_APP)
-@Composable
-private fun CardPrioridadPreview() {
-    GestorNotasTheme {
-        CardNota(ejemplo(nivelPrioridad.ALTA), Modifier.padding(16.dp), onEditar = {})
     }
 }
 
