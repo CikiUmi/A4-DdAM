@@ -47,7 +47,7 @@ private const val ESCALA_MAXIMA = 4f
 
 /**
  * @param nota la nota a mostrar, o null si es una nota nueva
- * @param onCerrar volver atras
+ * @param onCerrar volver atrassssss
  */
 @Composable
 fun Vista(
