@@ -53,3 +53,4 @@ proguard/
 
 # Windows clutter
 Thumbs.db
+*.salive
