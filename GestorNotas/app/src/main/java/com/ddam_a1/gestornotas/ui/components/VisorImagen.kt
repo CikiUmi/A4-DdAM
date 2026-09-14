@@ -1,6 +1,8 @@
 package com.ddam_a1.gestornotas.ui.components
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -68,7 +70,10 @@ private const val UMBRAL_CIERRE = 300f
  * La foto a pantalla completa.
  *
  * @param ruta dónde está el archivo copiado
- * @param onCerrar se llama al arrastrar hacia abajo o al tocar el fondo
+ * @param onCerrar se llama al arrastrar hacia abajo, o con el botón de atrás
+ *        (de eso se encarga el `onDismissRequest` del Dialog). Tocar NO cierra:
+ *        el Box tapa toda la pantalla, así que no hay "fuera" que tocar, y un
+ *        toque suelto sería fácil de disparar sin querer mientras haces zoom.
  */
 @Composable
 fun VisorImagen(
@@ -91,9 +96,24 @@ fun VisorImagen(
         var desplazamiento by remember { mutableStateOf(Offset.Zero) }
         var arrastreCierre by remember { mutableFloatStateOf(0f) }
 
-        // El regreso a su sitio cuando sueltas sin llegar al umbral. Animado,
-        // porque un salto seco se siente como un error y no como una decisión.
-        val arrastreAnimado by animateFloatAsState(arrastreCierre, label = "arrastre")
+        // El regreso a su sitio cuando sueltas sin llegar al umbral.
+        //
+        // OJO CON EL RESORTE. Este mismo valor animado es el que mueve la foto
+        // MIENTRAS jalas, asi que con el resorte suave de fabrica la imagen iba
+        // siempre unos pixeles atras del dedo y se sentia blandita. Con
+        // `StiffnessHigh` alcanza al dedo (se ve 1 a 1) y aun asi el regreso al
+        // soltar es un movimiento y no un brinco seco.
+        //
+        // `DampingRatioNoBouncy` porque una foto que rebota al volver a su sitio
+        // parece de juguete.
+        val arrastreAnimado by animateFloatAsState(
+            targetValue = arrastreCierre,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessHigh
+            ),
+            label = "arrastre"
+        )
 
         // El fondo se va aclarando conforme jalas: es la pista de que soltar va a
         // cerrar. 1f = negro completo, 0f = transparente.
@@ -121,7 +141,23 @@ fun VisorImagen(
                             if (escala > ZOOM_MINIMO || zoom != 1f) {
                                 // Con la foto acercada, el dedo la PASEA.
                                 escala = (escala * zoom).coerceIn(ZOOM_MINIMO, ZOOM_MAXIMO)
-                                desplazamiento += pan
+
+                                // PERO NO HASTA PERDERLA. Sin este limite, a 5x
+                                // podias arrastrar la foto entera fuera de la
+                                // pantalla y quedarte viendo negro, sin forma de
+                                // traerla de vuelta mas que cerrando.
+                                //
+                                // Cuanto sobra para pasear = lo que crecio la
+                                // foto, repartido entre los dos lados. A 1x sobra
+                                // cero, y el limite se vuelve "no te muevas".
+                                // `size` es el tamaño real de la caja en pixeles,
+                                // y lo da el propio PointerInputScope.
+                                val sobraX = size.width * (escala - 1f) / 2f
+                                val sobraY = size.height * (escala - 1f) / 2f
+                                desplazamiento = Offset(
+                                    (desplazamiento.x + pan.x).coerceIn(-sobraX, sobraX),
+                                    (desplazamiento.y + pan.y).coerceIn(-sobraY, sobraY)
+                                )
 
                                 // Al volver a 1x se recentra: si no, la foto se
                                 // quedaría fuera de cuadro y no habría forma de
