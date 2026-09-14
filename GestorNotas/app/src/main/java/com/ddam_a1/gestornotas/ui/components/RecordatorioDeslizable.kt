@@ -11,11 +11,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.Text
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -23,11 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
@@ -150,12 +145,19 @@ fun AnimacionEntrada(
 }
 
 // ============================================================
-//  DEMO PARA PROBAR EL GESTO
+//  PREVIEWS DEL GESTO
 //
-//  `mutableStateListOf` en vez de `listOf`. Con una lista fija, la tarjeta se
-//  desliza... y se queda colgada fuera de pantalla, porque nadie la quito de
-//  los datos. Asi como esta, deslizar borra el dato y la fila desaparece sola,
-//  que es justo lo que va a pasar en la app al llamar `meterPapelera(id)`.
+//  Antes aqui vivia un `DemoDeslizable` que fingia ser el ViewModel: guardaba
+//  las notas en un `mutableStateListOf` y al deslizar las quitaba de esa lista
+//  a mano. Servia cuando la app todavia no tenia base de datos y habia que
+//  probar el gesto contra algo.
+//
+//  Ya no: la fuente de verdad es Room, y quien quita una nota es
+//  `vm.meterPapelera(id)` -> el DAO -> la tabla -> el Flow -> la pantalla. Una
+//  lista falsa aqui abajo solo podria mentir sobre como se comporta la app.
+//
+//  Estos previews dibujan las dos variantes del fondo de swipe con datos fijos.
+//  No borran nada porque no les toca: borrar es trabajo del ViewModel.
 // ============================================================
 
 private const val FONDO = 0xFFEAE2D4
@@ -164,75 +166,43 @@ private fun demo(titulo: String) = Nota(
     titulo = titulo,
     contenido = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
             "Pellentesque a nisi ultricies, faucibus risus feugiat.",
-    fechaNota = LocalDateTime.now().plusDays(2)
+    fechaNota = LocalDateTime.now()
 )
 
-private fun datosDemo() = listOf(
-    demo("Entregar la practica de DdAM"),
-    demo("Comprar cafe"),
-    demo("Llamar a mama"),
-    demo("Revisar el Figma del equipo")
-)
-
-/**
- * Maqueta de la bandeja, solo para probar el gesto.
- * Hace de mentiritas lo que el ViewModel hara de verdad:
- * guardar la lista y quitarle cosas.
- */
+@Preview(name = "Deslizar para eliminar", showBackground = true, backgroundColor = FONDO, heightDp = 300)
 @Composable
-fun DemoDeslizable(modifier: Modifier = Modifier) {
-    val datos = remember { mutableStateListOf(*datosDemo().toTypedArray()) }
-
-    if (datos.isEmpty()) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            TextButton(onClick = { datos.addAll(datosDemo()) }) {
-                Text("Ya no queda nada. Reiniciar demo")
-            }
-        }
-        return
-    }
-
-    LazyColumn(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // El `key` es obligatorio en el Lazy: porque si no Compose identifica las
-        // filas por su posicion, y al borrar la primera mueve a todas en vez de a
-        // una. Resultado tipico: se anima la tarjeta equivocada.
-        items(datos, key = { it.id }) { nota ->
-            AnimacionEntrada {
+private fun DeslizarBorrarPreview() {
+    GestorNotasTheme {
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(listOf(demo("Entregar la practica de DdAM"), demo("Comprar cafe")),
+                key = { it.id }) { nota ->
                 NotaDeslizable(
                     nota = nota,
                     accion = AccionSwipe.BORRAR,
-                    onAccion = { id -> datos.removeAll { it.id == id } }
+                    onAccion = {}
                 )
             }
         }
     }
 }
 
-@Preview(name = "Deslizar para eliminar", showBackground = true, backgroundColor = FONDO, heightDp = 720)
+@Preview(name = "Deslizar para recuperar", showBackground = true, backgroundColor = FONDO, heightDp = 200)
 @Composable
-private fun DemoDeslizablePreview() {
-    GestorNotasTheme { DemoDeslizable() }
-}
-
-@Preview(name = "Deslizar para recuperar", showBackground = true, backgroundColor = FONDO, heightDp = 300)
-@Composable
-private fun DemoRecuperarPreview() {
+private fun DeslizarRecuperarPreview() {
     GestorNotasTheme {
-        val datos = remember { mutableStateListOf(demo("Nota tirado")) }
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(datos, key = { it.id }) { r ->
+            items(listOf(demo("Nota en la papelera")), key = { it.id }) { nota ->
                 NotaDeslizable(
-                    nota = r,
+                    nota = nota,
                     accion = AccionSwipe.RECUPERAR,
                     estado = EstadoCard.EN_PAPELERA,
-                    onAccion = { id -> datos.removeAll { it.id == id } }
+                    onAccion = {}
                 )
             }
         }

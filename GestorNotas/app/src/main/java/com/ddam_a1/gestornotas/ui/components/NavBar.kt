@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ddam_a1.gestornotas.R
 import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
+import com.ddam_a1.gestornotas.ui.theme.coloresExtra
 
 /**
  * Los DESTINOS de la app: los lugares donde el usuario puede estar.
@@ -103,31 +104,43 @@ private val ITEM_TAM_BARRA = 66.dp
 private val SALIENTE = 48.dp
 
 // ============================================================
-//  COLORES — sacados de tu Figma, midiendo los pixeles
+//  COLORES — leidos de las VARIABLES del Figma, no de los pixeles
 //
-//  Y aquí está lo bonito: los cuatro colores de tu diseño SÍ salen de tu tema.
-//  Ninguno está escrito a mano.
+//  OJO CON ESTO, que es la trampa de todo el archivo:
 //
-//    fondo del rail ........... #354D2E = onTertiaryContainer
-//    icono normal ............. #FFFFFF = onTertiary
-//    indicador seleccionado ... #C2B283 = primaryContainer AL 70%
-//    icono seleccionado ....... #54452A = onSecondaryContainer
-//    botón "nuevo" ............ #FFF8F3 = surface
+//  El nombre que tiene una variable EN EL FIGMA no es el nombre del rol que le
+//  corresponde EN EL TEMA. Tu Figma trae el tema de A3 y el de A4 mezclados, y
+//  varios pares quedaron cruzados. Lo que manda es el HEX: se busca en Color.kt
+//  cual rol tiene ese valor, y se usa ESE rol.
 //
-//  Lo del 70% lo verifiqué con la fórmula de mezcla: primaryContainer (#FFDEA7)
-//  al 70% sobre el verde da exactamente #C2B283, con los tres canales de acuerdo.
-//  Por eso el indicador NO es un color plano: es transparencia, como me dijiste.
+//    variable del Figma            hex        rol real en el tema
+//    ---------------------------------------------------------------
+//    onTertiaryContainerLight      #5D3F3B    onSecondaryContainer   <- cruzado
+//    primaryContainerLight         #FCDFA6    tertiaryContainer      <- cruzado
+//    onSecondaryContainerLight     #574419    onTertiaryContainer    <- cruzado
+//    lightSurface                  #FFF8F7    surface
+//    onCorrectContainerLight       #7A590C    coloresExtra.correct   <- nuevo
+//
+//  Por que importa: si escribes el HEX a mano, en modo oscuro sigue siendo el
+//  mismo cafe sobre fondo cafe. Si usas el ROL, el tema lo cambia solo.
 // ============================================================
 
-/** Opacidad del indicador de seleccionado. Tu Figma usa 70%. */
-private const val ALPHA_SELECCIONADO = 0.75f
+/**
+ * Opacidad del indicador de seleccionado. Tu Figma usa 70% (`-70a`).
+ *
+ * Con 70%, el #FCDFA6 sobre el cafe #5D3F3B da #CCAF86, y el icono cafe encima
+ * queda en 4.48:1. Para un ICONO el minimo de WCAG es 3:1 (regla 1.4.11, que es
+ * la de objetos graficos, no la de texto), asi que pasa. Si algun dia le pones
+ * texto dentro, subelo a 0.80f: ahi da 5.32:1 y pasa tambien como texto.
+ */
+private const val ALPHA_SELECCIONADO = 0.70f
 
 @Composable
-private fun colorFondoRail() = MaterialTheme.colorScheme.onTertiaryContainer
+private fun colorFondoRail() = MaterialTheme.colorScheme.onSecondaryContainer
 
 @Composable
 private fun colorIndicador() =
-    MaterialTheme.colorScheme.primaryContainer.copy(alpha = ALPHA_SELECCIONADO)
+    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = ALPHA_SELECCIONADO)
 
 // ============================================================
 //  RAIL LATERAL  — pantallas medianas y tablet
@@ -145,7 +158,9 @@ fun NotasNavRail(
     onDestino: (DestinoNav) -> Unit,
     onMenu: () -> Unit,
     onNuevo: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    @DrawableRes iconoAccion: Int = R.drawable.ic_add,
+    descripcionAccion: String = "Nueva nota"
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -183,7 +198,7 @@ fun NotasNavRail(
         Spacer(Modifier.weight(1f))
 
         // ---- La acción, hasta abajo (como en tu Figma) ----
-        BotonAccion(onClick = onNuevo)
+        BotonAccion(iconoAccion, descripcionAccion, onNuevo)
     }
 }
 
@@ -220,15 +235,20 @@ internal fun ItemRail(
             painter = painterResource(icono),
             contentDescription = descripcion,
             tint = if (seleccionado) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onTertiary,
+            else MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.size(ICONO_TAM)
         )
     }
 }
 
-/** El cuadrito claro de "nueva nota" que va hasta abajo del rail. */
+/** El cuadrito claro de accion que va hasta abajo del rail. */
 @Composable
-private fun BotonAccion(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun BotonAccion(
+    @DrawableRes icono: Int,
+    descripcion: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -238,9 +258,9 @@ private fun BotonAccion(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .clickable(onClick = onClick)
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_add),
-            contentDescription = "Nueva nota",
-            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+            painter = painterResource(icono),
+            contentDescription = descripcion,
+            tint = MaterialTheme.colorScheme.onSecondaryContainer,
             modifier = Modifier.size(ICONO_TAM)
         )
     }
@@ -269,6 +289,13 @@ fun NotasBottomBar(
     onDestino: (DestinoNav) -> Unit,
     onNuevo: () -> Unit,
     modifier: Modifier = Modifier,
+    // QUE hace el boton del centro depende de en que pantalla estes: en la
+    // bandeja crea una nota, en la vista la edita, editando la guarda. El dibujo
+    // es el mismo, el icono y la etiqueta cambian. Por eso entran por parametro
+    // en vez de estar clavados aqui: la barra no tiene por que saber en que
+    // pantalla esta.
+    @DrawableRes iconoAccion: Int = R.drawable.ic_add,
+    descripcionAccion: String = "Nueva nota",
     colorFondoPantalla: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     // El hueco de la barra del sistema. Por defecto se LEE del dispositivo;
     // los previews le pasan un número a mano para simular cada modo.
@@ -329,13 +356,18 @@ fun NotasBottomBar(
                 .size(FAB_TAM)
                 .shadow(6.dp, CircleShape)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                // El circulo dorado del Figma. La variable de alla se llama
+                // `primaryContainerLight`, pero ese hex (#FCDFA6) en tu tema es
+                // `tertiaryContainer`. El nombre miente, el hex no.
+                .background(MaterialTheme.colorScheme.tertiaryContainer)
                 .clickable(onClick = onNuevo)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_add),
-                contentDescription = "Nueva nota",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                painter = painterResource(iconoAccion),
+                contentDescription = descripcionAccion,
+                // #7A590C. Este si es nuevo: no existe en Material, se agrego
+                // como `correct` en el tema. Da 4.98:1 sobre el dorado.
+                tint = MaterialTheme.coloresExtra.correct.color,
                 modifier = Modifier.size(ICONO_TAM)
             )
         }

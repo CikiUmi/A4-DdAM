@@ -7,7 +7,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -251,6 +254,72 @@ val unspecified_scheme = ColorFamily(
     Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
+// ============================================================
+//  COLORES EXTRA
+//
+//  `MaterialTheme.colorScheme` es una lista CERRADA: trae primary, secondary,
+//  error y compania, y no se le pueden agregar campos. Pero tu Figma tiene un
+//  color que no es ninguno de esos (el #7A590C de la palomita de guardar), asi
+//  que hace falta un segundo paquete que viaje al lado.
+//
+//  Podrias escribir `Color(0xFF7A590C)` directo en el boton y funcionaria... en
+//  modo claro. En oscuro seguiria siendo el mismo cafe sobre fondo cafe. Un
+//  color suelto no sabe en que tema esta; un rol si.
+//
+//  El truco es el mismo que usa Material por dentro:
+//    1. una `data class` con los colores
+//    2. un `CompositionLocal` que la reparte hacia abajo sin pasarla por
+//       parametro pantalla por pantalla
+//    3. el tema decide QUE paquete mete segun claro/oscuro
+//
+//  Se usa igualito que los de Material:
+//      MaterialTheme.coloresExtra.correct.color
+// ============================================================
+
+/**
+ * Los colores que Material no tiene y tu diseno si.
+ *
+ * Reusa `ColorFamily` (la que ya venia en este archivo) para que cada color
+ * extra traiga sus cuatro papeles completos, no un hex suelto.
+ */
+@Immutable
+data class ColoresExtra(
+    /** Confirmado / correcto. La palomita de guardar. */
+    val correct: ColorFamily
+)
+
+private val coloresExtraClaro = ColoresExtra(
+    correct = ColorFamily(
+        correctLight,
+        onCorrectLight,
+        correctContainerLight,
+        onCorrectContainerLight
+    )
+)
+
+private val coloresExtraOscuro = ColoresExtra(
+    correct = ColorFamily(
+        correctDark,
+        onCorrectDark,
+        correctContainerDark,
+        onCorrectContainerDark
+    )
+)
+
+/**
+ * El canal por el que bajan los colores extra.
+ *
+ * El valor por defecto es el claro y no `unspecified_scheme` a proposito: si
+ * alguien dibuja un componente FUERA de GestorNotasTheme (pasa en los previews
+ * a medio hacer), es mejor que se vea con el color bien a que se vea invisible.
+ */
+val LocalColoresExtra = staticCompositionLocalOf { coloresExtraClaro }
+
+/** Atajo para escribir `MaterialTheme.coloresExtra` igual que `.colorScheme`. */
+val MaterialTheme.coloresExtra: ColoresExtra
+    @Composable @ReadOnlyComposable
+    get() = LocalColoresExtra.current
+
 @Composable
 fun GestorNotasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -269,10 +338,18 @@ fun GestorNotasTheme(
         else -> lightScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
-    )
+    // Los extra siguen a claro/oscuro, NO a dynamicColor: Material You no puede
+    // inventar un "correct" porque no sabe que existe.
+    val extra = if (darkTheme) coloresExtraOscuro else coloresExtraClaro
+
+    // El Provider envuelve al MaterialTheme: todo lo que se dibuje adentro puede
+    // leer `MaterialTheme.coloresExtra`, sin que nadie lo pase por parametro.
+    CompositionLocalProvider(LocalColoresExtra provides extra) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content
+        )
+    }
 }
 

@@ -30,8 +30,8 @@ import com.ddam_a1.gestornotas.ui.components.SEPARACION_TITULO_DESCRIPCION
 import com.ddam_a1.gestornotas.ui.components.colorFondoDe
 import com.ddam_a1.gestornotas.ui.components.colorSecundarioDe
 import com.ddam_a1.gestornotas.ui.components.colorTextoDe
+import com.ddam_a1.gestornotas.ui.components.fechaCorta
 import com.ddam_a1.gestornotas.ui.components.formatoLargo
-import com.ddam_a1.gestornotas.ui.components.hace
 import com.ddam_a1.gestornotas.ui.theme.GestorNotasTheme
 
 // ============================================================
@@ -85,7 +85,7 @@ fun PanelDetalle(
         Column(Modifier.padding(PADDING_TARJETA)) {
 
             Text(
-                text = hace(nota.fechaNota),
+                text = fechaCorta(nota.fechaNota),
                 style = MaterialTheme.typography.labelSmall,
                 color = colorSecundario,
                 modifier = Modifier.fillMaxWidth(),

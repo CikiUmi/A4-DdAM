@@ -83,7 +83,7 @@ fun EtiquetaNav(
                 // Mismo indicador que el rail cerrado: primaryContainer al 70%,
                 // que es el beige #C2B283 de tu Figma.
                 if (seleccionado)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.70f)
+                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.70f)
                 else Color.Transparent
             )
             .clickable(role = Role.Tab, onClick = onClick)
@@ -91,7 +91,7 @@ fun EtiquetaNav(
     ) {
         val colorContenido =
             if (seleccionado) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onTertiary
+            else MaterialTheme.colorScheme.onPrimary
 
         Icon(
             painter = painterResource(icono),
@@ -120,14 +120,16 @@ fun NotasNavRailAbierto(
     onDestino: (DestinoNav) -> Unit,
     onMenu: () -> Unit,
     onNuevo: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    @DrawableRes iconoAccion: Int = R.drawable.ic_add,
+    descripcionAccion: String = "Nueva nota"
 ) {
     Column(
         modifier = modifier
             .fillMaxHeight()
             .width(RAIL_ABIERTO_ANCHO)
             .shadow(8.dp)
-            .background(MaterialTheme.colorScheme.onTertiaryContainer)
+            .background(MaterialTheme.colorScheme.onSecondaryContainer)
             .padding(horizontal = PADDING_LATERAL)
             .padding(top = PADDING_ARRIBA, bottom = PADDING_ABAJO)
     ) {
@@ -142,7 +144,7 @@ fun NotasNavRailAbierto(
             Icon(
                 painter = painterResource(R.drawable.ic_menu),
                 contentDescription = "Cerrar menú",
-                tint = MaterialTheme.colorScheme.onTertiary,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(ICONO_TAM)
             )
         }
@@ -176,16 +178,16 @@ fun NotasNavRailAbierto(
                 .padding(horizontal = 20.dp)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_add),
+                painter = painterResource(iconoAccion),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.size(ICONO_TAM)
             )
             Spacer(Modifier.width(16.dp))
             Text(
-                text = "Nueva nota",
+                text = descripcionAccion,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onTertiaryContainer
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.ddam_a1.gestornotas.ui.screens
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ddam_a1.gestornotas.R
 import com.ddam_a1.gestornotas.ui.components.DestinoNav
 import com.ddam_a1.gestornotas.ui.components.NotasBottomBar
 import com.ddam_a1.gestornotas.ui.components.altoBarraInferior
@@ -63,6 +65,11 @@ fun Andamio(
     railAbierto: Boolean,
     onAlternarRail: () -> Unit,
     modifier: Modifier = Modifier,
+    // El boton de accion es el MISMO dibujo en todas las pantallas, pero no hace
+    // lo mismo en todas: en la bandeja crea, en la vista edita, editando guarda.
+    // Eso lo decide quien usa el Andamio (el NavHost), no el Andamio.
+    @DrawableRes iconoAccion: Int = R.drawable.ic_add,
+    descripcionAccion: String = "Nueva nota",
     contenido: @Composable (Margenes) -> Unit
 ) {
     // El fondo de la app. Tiene que ser el MISMO color que usa la muesca de la
@@ -116,6 +123,8 @@ fun Andamio(
                     destinoActual = destinoActual,
                     onDestino = onDestino,
                     onNuevo = onNuevo,
+                    iconoAccion = iconoAccion,
+                    descripcionAccion = descripcionAccion,
                     colorFondoPantalla = fondo,
                     modifier = Modifier.align(Alignment.BottomCenter)
                 )
@@ -128,14 +137,18 @@ fun Andamio(
                         destinoActual = destinoActual,
                         onDestino = onDestino,
                         onMenu = onAlternarRail,
-                        onNuevo = onNuevo
+                        onNuevo = onNuevo,
+                        iconoAccion = iconoAccion,
+                        descripcionAccion = descripcionAccion
                     )
                 } else {
                     NotasNavRail(
                         destinoActual = destinoActual,
                         onDestino = onDestino,
                         onMenu = onAlternarRail,
-                        onNuevo = onNuevo
+                        onNuevo = onNuevo,
+                        iconoAccion = iconoAccion,
+                        descripcionAccion = descripcionAccion
                     )
                 }
 

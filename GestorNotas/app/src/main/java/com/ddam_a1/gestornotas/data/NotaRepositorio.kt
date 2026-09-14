@@ -1,5 +1,6 @@
 package com.ddam_a1.gestornotas.data
 
+import com.ddam_a1.gestornotas.modelClasses.Imagen
 import com.ddam_a1.gestornotas.modelClasses.Nota
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
@@ -35,4 +36,23 @@ interface NotaRepositorio {
 
     // borrar las que ya expiraron en papelera
     suspend fun vaciarPapelera(limite: LocalDateTime): Boolean
+
+    // guardar una nota exista o no (Upsert). Lo usa la ruta de las fotos.
+    suspend fun guardar(nota: Nota)
+
+    // ---------- IMAGENES ----------
+    //
+    // Viven en la MISMA interfaz y no en un `ImagenRepositorio` aparte porque
+    // una imagen no existe sola: siempre es "las fotos DE una nota". Partirlo
+    // en dos repositorios obligaría a la pantalla a pedirle a dos objetos lo
+    // que conceptualmente es una sola cosa.
+
+    // las fotos de una nota, en vivo
+    fun imagenesDe(notaID: String): Flow<List<Imagen>>
+
+    // adjuntar una foto
+    suspend fun agregarImagen(imagen: Imagen)
+
+    // quitar una foto
+    suspend fun borrarImagen(imagen: Imagen)
 }

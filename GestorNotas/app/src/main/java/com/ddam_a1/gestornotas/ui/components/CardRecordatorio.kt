@@ -109,14 +109,18 @@ fun CardNota(
         Column(modifier = Modifier.padding(PADDING_TARJETA)) {
 
             // ---- La linea de fecha, arriba a la derecha ----
-            // En la bandeja dice "hace 2 h" en gris.
+            // En la bandeja dice "14/09/2026" en gris.
             // En la papelera dice "se elimina el 12/09/2026" en ROJO.
             // Es el mismo hueco contando dos cosas distintas segun donde estes.
+            //
+            // Antes decia "hace 2 h". Para recordatorios eso servia: lo que te
+            // importaba era cuanto FALTA. En un diario no: lo que te importa es
+            // QUE DIA lo escribiste. Misma linea, otra pregunta.
             Text(
                 text = if (estado == EstadoCard.EN_PAPELERA)
                     textoEliminacion(nota.fechaEliminado)
                 else
-                    hace(nota.fechaNota),
+                    fechaCorta(nota.fechaNota),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (estado == EstadoCard.EN_PAPELERA)
                     MaterialTheme.colorScheme.error
@@ -244,7 +248,12 @@ fun FondoSwipe(
 //  se pueden mover a un archivo en ui y quítarles el private.
 // ============================================================
 
-/** Texto relativo: "hace 2 h", "en 3 d". */
+/**
+ * Texto relativo: "hace 2 h", "en 3 d".
+ *
+ * Ya nadie la usa (las tarjetas ahora muestran la fecha), pero se queda por si
+ * la quieres para algo como "editada hace un momento".
+ */
 internal fun hace(momento: LocalDateTime): String {
     val minutos = ChronoUnit.MINUTES.between(momento, LocalDateTime.now())
     val futuro = minutos < 0
@@ -263,6 +272,13 @@ private val FORMATO_LARGO = DateTimeFormatter.ofPattern("d 'de' MMMM, HH:mm", Lo
 private val FORMATO_CORTO = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("es", "MX"))
 
 internal fun formatoLargo(momento: LocalDateTime): String = momento.format(FORMATO_LARGO)
+
+/**
+ * "14/09/2026". El mismo formato que usa `textoEliminacion`, a proposito: las
+ * dos frases caen en el MISMO renglon de la tarjeta segun donde estes, y si
+ * escribieran la fecha distinto se leeria como si hablaran de cosas distintas.
+ */
+internal fun fechaCorta(momento: LocalDateTime): String = momento.format(FORMATO_CORTO)
 
 /**
  * "se elimina el 12/09/2026", que es lo que dice en la papelera.

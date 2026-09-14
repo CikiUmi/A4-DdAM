@@ -2,6 +2,7 @@ package com.ddam_a1.gestornotas.di
 
 import android.content.Context
 import com.ddam_a1.gestornotas.data.GestorDatabase
+import com.ddam_a1.gestornotas.data.ImagenDao
 import com.ddam_a1.gestornotas.data.NotaDao
 import com.ddam_a1.gestornotas.data.NotaRepositorio
 import com.ddam_a1.gestornotas.data.NotaRepositorioLocal
@@ -26,7 +27,16 @@ object DatabaseModule {
     @Provides
     fun proveerDao(db: GestorDatabase): NotaDao = db.notaDao()
 
+    // Un dao nuevo = un @Provides nuevo. Hilt empata por TIPO DE RETORNO, así
+    // que con esto ya sabe fabricar un ImagenDao cuando alguien lo pida.
+    @Provides
+    fun proveerImagenDao(db: GestorDatabase): ImagenDao = db.imagenDao()
+
+    // Y como el repositorio ahora necesita los dos, se le piden los dos. Hilt
+    // resuelve la cadena solo: pide GestorDatabase, de ahí saca los dos daos, y
+    // con los dos arma el repositorio.
     @Provides
     @Singleton
-    fun proveerRepositorio(dao: NotaDao): NotaRepositorio = NotaRepositorioLocal(dao)
+    fun proveerRepositorio(dao: NotaDao, imagenDao: ImagenDao): NotaRepositorio =
+        NotaRepositorioLocal(dao, imagenDao)
 }
