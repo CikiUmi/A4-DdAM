@@ -22,19 +22,19 @@ interface NotaDao {
 
     // leer notas de bandeja y regresar lista
     // 0 es FALSE en SQLite según android studio warnings...
-    @Query("SELECT * FROM nota WHERE en_papelera = 0 ORDER BY fecha_nota ASC")
+    @Query("SELECT * FROM notas WHERE en_papelera = 0 ORDER BY fecha_nota ASC")
     fun leerBandeja(): Flow<List<Nota>>
 
     // leer las de papelera y regresar lista
-    @Query("SELECT * FROM nota WHERE en_papelera = 1 ORDER BY fecha_eliminado ASC")
+    @Query("SELECT * FROM notas WHERE en_papelera = 1 ORDER BY fecha_eliminado ASC")
     fun leerPapelera(): Flow<List<Nota>>
 
     // lee una nota específica con el ID
-    @Query("SELECT * FROM nota WHERE _id = :notaID")
+    @Query("SELECT * FROM notas WHERE _id = :notaID")
     suspend fun leerNota(notaID: String): Nota?
 
     // añadir una
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun agregar(nota: Nota)
 
     // actualizar
@@ -42,11 +42,11 @@ interface NotaDao {
     suspend fun update(nota: Nota)
 
     // echar a papelera
-    @Query("UPDATE nota SET fecha_eliminado = :cuando, en_papelera = 1 WHERE _id = :notaID")
-    suspend fun meterPapelera(cuando: LocalDateTime, notaID: String): Int
+    @Query("UPDATE notas SET fecha_eliminado = :cuando, en_papelera = 1 WHERE _id = :notaID")
+    suspend fun meterPapelera(notaID: String, cuando: LocalDateTime): Int
 
     // sacar de papelera
-    @Query("UPDATE nota SET fecha_eliminado = null, en_papelera = 0 WHERE _id = :notaID")
+    @Query("UPDATE notas SET fecha_eliminado = null, en_papelera = 0 WHERE _id = :notaID")
     suspend fun sacarPapelera(notaID: String): Int
 
     // borrar una
@@ -54,6 +54,6 @@ interface NotaDao {
     suspend fun borrar(nota: Nota)
 
     // borrar las que ya expiraron en papelera
-    @Query("DELETE FROM nota WHERE fecha_eliminado <= :limite")
+    @Query("DELETE FROM notas WHERE fecha_eliminado <= :limite")
     suspend fun vaciarPapelera(limite: LocalDateTime): Int
 }

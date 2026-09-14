@@ -21,6 +21,7 @@ abstract class GestorDatabase : RoomDatabase() {
     companion object {
 
         // para no sobreescribir o tener más de una db (por suspend, hilos y corrutinas)
+        // VOLATILE siempre va en memoria principal, nunca en caché
         @Volatile
         private var INSTANCE: GestorDatabase? = null
 
@@ -32,7 +33,7 @@ abstract class GestorDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder (
                     context.applicationContext,
                     GestorDatabase::class.java,
-                    "gestor_notas"
+                    "gestor_notas_database"
                 )
                     //.setQueryExector() <- se puede definir acá
                     .fallbackToDestructiveMigration()

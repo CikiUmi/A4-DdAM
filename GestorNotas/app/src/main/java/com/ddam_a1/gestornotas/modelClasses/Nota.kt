@@ -26,7 +26,7 @@ const val DIAS_EN_PAPELERA = 5L
 
 // Definir los enums
 
-@Entity
+@Entity(tableName = "notas")
 data class Nota(
     @PrimaryKey @ColumnInfo (name = "_id") val id: String = UUID.randomUUID().toString(),
     //val id: String = UUID.randomUUID().toString(),
