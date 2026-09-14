@@ -19,7 +19,7 @@ class NotasViewModel @Inject constructor() : ViewModel() {
 
     // Y tmb se crean las listas para mandar a las interfaces.
 
-    private val _notas: Flow<List<Nota>> =
+    //private val _notas: Flow<List<Nota>> =
     private val _notas = mutableStateListOf<Nota>()
     // por seguridad es private, para que no le estén moviendo
     // el _ es porque es buena práctica ponérselo cuando es privada

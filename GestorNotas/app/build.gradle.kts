@@ -43,7 +43,7 @@ dependencies {
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
-    implementation("androidx.ro om:room-ktx:${room_version}")
+    implementation("androidx.room:room-ktx:${room_version}")
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 

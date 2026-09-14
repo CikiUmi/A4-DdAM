@@ -1,7 +1,15 @@
 package com.ddam_a1.gestornotas.modelClasses
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 import java.util.UUID
+
+/**
+ * @Entity
+ *     data class Nota(@PrimaryKey @ColumnInfo(name = "string") val string: String)
+ *     */
 
 /**
  * Dias que una nota vive en la papelera antes de borrarse solo.
@@ -17,19 +25,16 @@ import java.util.UUID
 const val DIAS_EN_PAPELERA = 5L
 
 // Definir los enums
-enum class nivelPrioridad {
-    NULA,
-    BAJA,
-    MEDIA,
-    ALTA
-}
+
+@Entity
 data class Nota(
-    val id: String = UUID.randomUUID().toString(),
-    val titulo : String = "",
-    val descripcion : String = "",
-    val enPapelera: Boolean = false,
-    val fechaNota: LocalDateTime = LocalDateTime.now(),
-    val fechaEliminado: LocalDateTime? = null,
+    @PrimaryKey @ColumnInfo (name = "_id") val id: String = UUID.randomUUID().toString(),
+    //val id: String = UUID.randomUUID().toString(),
+    @ColumnInfo (name = "titulo")val titulo : String = "",
+    @ColumnInfo (name = "contenido")val contenido : String = "",
+    @ColumnInfo (name = "en_papelera") val enPapelera: Boolean = false,
+    @ColumnInfo (name = "fecha_nota") val fechaNota: LocalDateTime = LocalDateTime.now(),
+    @ColumnInfo (name = "fecha_eliminado") val fechaEliminado: LocalDateTime? = null,
 )
 
 // El ?: (Elvis Operator /gen) significa que revisa si hay un valor, si no, asigna uno.
